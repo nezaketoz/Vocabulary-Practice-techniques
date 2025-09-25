@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Match-Up Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <!-- Game Container -->
+    <div id="game-container" class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6 sm:p-8 md:p-10 transform transition-all duration-300 scale-100">
+        <!-- Game Title -->
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center text-purple-800 mb-6">
+            <span class="text-yellow-500">✨</span> Vocabulary Match-Up <span class="text-yellow-500">✨</span>
+        </h1>
+
+        <!-- Game Interface -->
+        <div id="game-screen">
+            <p class="text-center text-gray-600 mb-4 font-semibold">Match the activity to the correct technique!</p>
+
+            <!-- Question Card -->
+            <div id="question-card" class="bg-purple-100 rounded-2xl p-6 mb-6 shadow-inner">
+                <p id="question-text" class="text-lg text-gray-800 font-medium text-center"></p>
+            </div>
+
+            <!-- Answer Buttons -->
+            <div id="answer-buttons" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Buttons will be dynamically generated here -->
+            </div>
+
+            <!-- Feedback and Score -->
+            <div class="mt-6 text-center">
+                <p id="feedback-text" class="text-lg font-semibold h-6"></p>
+                <p id="score-text" class="text-xl font-bold text-gray-700 mt-2">Score: 0/0</p>
+            </div>
+        </div>
+
+        <!-- Start/Next Button -->
+        <div class="text-center mt-8">
+            <button id="start-button" class="bg-purple-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-purple-700 transition duration-300">
+                Start Game
+            </button>
+            <button id="next-button" class="hidden bg-green-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-green-700 transition duration-300">
+                Next Question
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const gameScreen = document.getElementById('game-screen');
+        const startButton = document.getElementById('start-button');
+        const nextButton = document.getElementById('next-button');
+        const questionText = document.getElementById('question-text');
+        const answerButtonsContainer = document.getElementById('answer-buttons');
+        const feedbackText = document.getElementById('feedback-text');
+        const scoreText = document.getElementById('score-text');
+
+        // Game data with questions, correct answers, and descriptions.
+        const questions = [
+            {
+                activity: "Students act out the word 'sprint' by running in place.",
+                correctAnswer: "Total Physical Response (TPR)",
+                options: ["Collocation Matching", "Vocabulary Box", "Total Physical Response (TPR)", "Word Cloud"],
+                description: "Total Physical Response (TPR) connects language learning with physical movement, which helps kinesthetic learners remember words.",
+            },
+            {
+                activity: "Students complete the phrase 'pay attention' by selecting the correct word from a list.",
+                correctAnswer: "Collocation Matching",
+                options: ["Vocabulary Box", "Collocation Matching", "Contextualization", "Mind Map"],
+                description: "Collocation matching focuses on pairs or groups of words that frequently occur together, which helps students use language naturally.",
+            },
+            {
+                activity: "Students write down new words in a notebook, including their definition, an example sentence, and a synonym.",
+                correctAnswer: "Vocabulary Journal",
+                options: ["Contextualization", "Collocation Matching", "Vocabulary Journal", "Word Cloud"],
+                description: "A vocabulary journal encourages students to take personal ownership of their learning by actively recording and reflecting on new words.",
+            },
+            {
+                activity: "Students create a visual diagram with the word 'travel' in the center and connect it to related words like 'airport,' 'passport,' and 'vacation.'",
+                correctAnswer: "Word Cloud/Mind Map",
+                options: ["Vocabulary Journal", "Total Physical Response (TPR)", "Word Cloud/Mind Map", "Contextualization"],
+                description: "Mind maps and word clouds help students see the relationships between words, which is great for semantic clustering and memory.",
+            },
+            {
+                activity: "Students read a short story about a character who is feeling 'elated' and 'dejected,' and they must infer the meaning of the words from the story.",
+                correctAnswer: "Contextualization",
+                options: ["Collocation Matching", "Vocabulary Journal", "Contextualization", "Total Physical Response (TPR)"],
+                description: "Contextualization involves presenting new vocabulary within a meaningful context, helping students understand and remember the words based on how they are used."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function showQuestion() {
+            const currentQuestion = questions[currentQuestionIndex];
+            questionText.textContent = currentQuestion.activity;
+            answerButtonsContainer.innerHTML = '';
+            
+            // Create a shuffled copy of the options for the buttons
+            const shuffledOptions = [...currentQuestion.options];
+            shuffleArray(shuffledOptions);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add(
+                    'bg-gray-200', 'text-gray-800', 'font-semibold', 'py-4', 'px-6', 'rounded-2xl',
+                    'shadow-md', 'transition', 'duration-200', 'text-sm', 'sm:text-base', 'text-center',
+                    'hover:bg-purple-200', 'focus:outline-none', 'focus:ring-2', 'focus:ring-purple-500'
+                );
+                button.addEventListener('click', () => selectAnswer(option));
+                answerButtonsContainer.appendChild(button);
+            });
+
+            feedbackText.textContent = '';
+            nextButton.classList.add('hidden');
+            startButton.classList.add('hidden');
+        }
+
+        function selectAnswer(selectedOption) {
+            const currentQuestion = questions[currentQuestionIndex];
+            const isCorrect = selectedOption === currentQuestion.correctAnswer;
+            
+            // Disable all buttons after an answer is selected
+            const buttons = answerButtonsContainer.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.disabled = true;
+                if (button.textContent === currentQuestion.correctAnswer) {
+                    button.classList.remove('bg-gray-200', 'hover:bg-purple-200');
+                    button.classList.add('bg-green-500', 'text-white');
+                } else if (button.textContent === selectedOption) {
+                    button.classList.remove('bg-gray-200', 'hover:bg-purple-200');
+                    button.classList.add('bg-red-500', 'text-white');
+                }
+            });
+
+            if (isCorrect) {
+                score++;
+                feedbackText.textContent = 'Correct! 🎉';
+                feedbackText.classList.remove('text-red-500');
+                feedbackText.classList.add('text-green-600');
+                
+            } else {
+                feedbackText.textContent = 'Incorrect. 😕';
+                feedbackText.classList.remove('text-green-600');
+                feedbackText.classList.add('text-red-500');
+            }
+            
+            // Show the next button
+            nextButton.classList.remove('hidden');
+            updateScoreText();
+        }
+
+        function updateScoreText() {
+            scoreText.textContent = `Score: ${score}/${currentQuestionIndex + 1}`;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showFinalResults();
+            }
+        }
+
+        function showFinalResults() {
+            gameScreen.innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Game Over!</h2>
+                    <p class="text-xl text-gray-700 mb-2">You matched ${score} out of ${questions.length} techniques correctly.</p>
+                    <p class="text-lg text-gray-600 mb-6">Great job!</p>
+                </div>
+            `;
+            // Hide the next button and show the start button again to allow a new game
+            nextButton.classList.add('hidden');
+            startButton.classList.remove('hidden');
+            startButton.textContent = 'Play Again';
+            score = 0;
+            currentQuestionIndex = 0;
+        }
+
+        startButton.addEventListener('click', () => {
+            shuffleArray(questions);
+            showQuestion();
+            updateScoreText();
+        });
+
+        nextButton.addEventListener('click', nextQuestion);
+
+        // Initial setup
+        updateScoreText();
+    </script>
+</body>
+</html>
+
